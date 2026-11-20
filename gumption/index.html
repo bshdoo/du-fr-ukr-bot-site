@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Колесо Gumption</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Manrope:wght@400;600;700&display=swap">
+<style>
+/* Layout: one phone-first column. Wheel on top, task card under it, gumption help as a slide-down panel. */
+:root{
+  --bg:#f3f5fb; --surface:#ffffff; --fg:#151a2e; --muted:#5b6380; --line:#d9deec;
+  --accent:#ff5a36; --accent-ink:#ffffff; --gold:#ffc53d; --ok:#178a5b;
+  --s1:#ff5a36; --s2:#ffc53d; --s3:#9aa6c8; --s4:#17b890; --s5:#9b5cff; --s6:#ff8fb1; --s7:#00a6d6; --s8:#ffa23d; --s9:#6fd36a; --s10:#c3cadf;
+  --display:"Unbounded", "Arial Black", system-ui, sans-serif;
+  --body:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1222; --surface:#191d33; --fg:#eef0fa; --muted:#a3aac6; --line:#2c3150; --accent:#ff6a48; --accent-ink:#0f1222; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1222; --surface:#191d33; --fg:#eef0fa; --muted:#a3aac6; --line:#2c3150; --accent:#ff6a48; --accent-ink:#0f1222; color-scheme:dark}
+
+html,body{background:var(--bg); color:var(--fg)}
+body{font-family:var(--body); font-size:16px; line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:20px 40px}
+.wrap{max-width:520px; margin:0 auto; display:flex; flex-direction:column; gap:18px}
+.eyebrow{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:700}
+h1{font-family:var(--display); font-weight:800; font-size:clamp(26px, 7vw, 36px); line-height:1.1; margin:4px 0 0; text-wrap:balance}
+.lead{color:var(--muted); margin:0}
+.wheel-box{position:relative; width:100%; max-width:420px; aspect-ratio:1; margin:0 auto}
+canvas{width:100%; height:100%; display:block}
+.pointer{position:absolute; top:-6px; left:50%; transform:translateX(-50%); width:0; height:0;
+  border-left:16px solid transparent; border-right:16px solid transparent; border-top:30px solid var(--fg); filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+button{font-family:var(--body); font-weight:700; font-size:17px; border-radius:14px; padding:14px 18px; cursor:pointer; border:2px solid transparent}
+button:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
+.spin{background:var(--accent); color:var(--accent-ink); font-family:var(--display); font-size:20px; letter-spacing:.02em}
+.spin:disabled{opacity:.45; cursor:default}
+.ghost{background:transparent; color:var(--fg); border-color:var(--line)}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:18px; display:flex; flex-direction:column; gap:10px}
+.result-pts{font-family:var(--display); font-size:34px; color:var(--accent); line-height:1}
+.result-task{font-size:19px; font-weight:700; margin:0}
+.code{font-variant-numeric:tabular-nums; font-family:var(--display); font-size:15px; background:var(--bg); border:1px dashed var(--line); border-radius:10px; padding:8px 12px; align-self:flex-start}
+.rules{margin:0; padding-left:20px; color:var(--muted)}
+.rules li+li{margin-top:4px}
+.step{font-weight:700}
+.task5 h2{font-family:var(--display); font-size:20px; margin:0}
+.task5 p{margin:0}
+.help h3{font-family:var(--display); font-size:17px; margin:6px 0 0}
+.help ul{margin:0; padding-left:20px}
+.help li+li{margin-top:6px}
+.src{font-size:12px; color:var(--muted)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<style>body{margin:0}</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <div class="eyebrow">Контрольна 6М · завдання 5</div>
+    <h1>Колесо Gumption</h1>
+  </div>
+  <p class="lead">Крутиш колесо один раз. Що випало, те й робиш. Виконав(ла) завдання: отримуєш бонусні бали. Не хочеш: просто 0 бонусу, без штрафу.</p>
+
+  <div class="wheel-box">
+    <div class="pointer" aria-hidden="true"></div>
+    <canvas id="wheel" width="840" height="840" aria-label="Колесо фортуни з бонусними завданнями"></canvas>
+  </div>
+  <button class="spin" id="spinBtn">Крутити колесо</button>
+
+  <section class="card" id="result" hidden aria-live="polite">
+    <div class="eyebrow">Тобі випало</div>
+    <div class="result-pts" id="resPts"></div>
+    <p class="result-task" id="resTask"></p>
+    <ul class="rules">
+      <li>Покажи викладачу екран і виконай завдання. Мовчки, пару не перебиваємо.</li>
+      <li>Не хочеш виконувати: це ок, бонусу просто не буде.</li>
+    </ul>
+  </section>
+
+  <section class="card task5" id="task5" hidden>
+    <h2>Тепер головне: напиши від руки в полі 5</h2>
+    <p><span class="step">1.</span> Що для тебе особисто означає gumption? Своїми словами, не з словника.</p>
+    <p><span class="step">2.</span> Який з шести «ворогів gumption» найбільше про тебе?</p>
+    <p><span class="step">3.</span> Як би ти його поборов(ла)? Один конкретний крок.</p>
+    <button class="ghost" id="helpBtn" aria-expanded="false" aria-controls="help">Нагадати, що таке gumption</button>
+    <div class="help" id="help" hidden>
+      <h3>Gumption це</h3>
+      <ul>
+        <li>Кмітлива чи енергійна ініціатива й винахідливість.</li>
+        <li>Здатність вирішити, що найкраще зробити в конкретній ситуації, і зробити це енергійно та рішуче.</li>
+        <li>Розум знати, що робити, плюс мужність і сила духу.</li>
+      </ul>
+      <p>Тед Золлер називає Mindset сьомою M: без gumption шість інших M не запрацюють.</p>
+      <h3>Шість ворогів gumption</h3>
+      <ul>
+        <li>«У мене немає хорошої ідеї»</li>
+        <li>«У мене немає ресурсів чи капіталу»</li>
+        <li>«Я ще не маю навичок і знань»</li>
+        <li>«У мене немає досвіду чи бекґраунду»</li>
+        <li>«Я не можу взяти на себе ризик, або винагорода його не варта»</li>
+        <li>«Мені бракує творчої впевненості»</li>
+      </ul>
+      <p class="src">Джерело: лекція Теда Золлера «Знайомимося із сьомим M!» (Mindset), слайди 11 і 13.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const SECTORS = [
+  {pts:'+2', label:'+2 бали', task:'Мовчки встань, привітайся за руку з трьома людьми і так само мовчки сядь.', c:'--s1'},
+  {pts:'+1', label:'+1 бал', task:'Пощастило! Бонус просто так.', c:'--s2'},
+  {pts:'0', label:'0 балів', task:'Сьогодні не твій день. Просто посміхнись.', c:'--s3'},
+  {pts:'+½', label:'+0,5 бала', task:'Мовчки покажи викладачу великий палець.', c:'--s4'},
+  {pts:'+1', label:'+1 бал', task:'Мовчки помахай людині в іншому кінці аудиторії, поки вона не помітить.', c:'--s5'},
+  {pts:'+2', label:'+2 бали', task:'Мовчки встань, повільно обернись навколо себе і сядь.', c:'--s6'},
+  {pts:'+½', label:'+0,5 бала', task:'З дуже серйозним обличчям потисни руку сусіду.', c:'--s7'},
+  {pts:'+1', label:'+1 бал', task:'Намалюй на полях листка свого внутрішнього підприємця.', c:'--s8'},
+  {pts:'+2', label:'+2 бали', task:'Напиши на листку «Я підприємець» дзеркально, справа наліво.', c:'--s9'},
+  {pts:'0', label:'0 балів', task:'Порожньо. Але gumption не здається!', c:'--s10'},
+];
+const KEY = 'gumption-wheel-2026-11-20-v2';
+const cv = document.getElementById('wheel'), ctx = cv.getContext('2d');
+const btn = document.getElementById('spinBtn');
+const N = SECTORS.length, ARC = 2*Math.PI/N;
+let angle = 0;
+
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+function wrapText(t, max){
+  const words = t.split(' '), lines = []; let cur = '';
+  for(const w of words){ const test = cur ? cur+' '+w : w;
+    if(ctx.measureText(test).width > max && cur){ lines.push(cur); cur = w } else cur = test }
+  if(cur) lines.push(cur); return lines.slice(0,3);
+}
+function draw(){
+  const R = cv.width/2; ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.save(); ctx.translate(R,R); ctx.rotate(angle);
+  for(let i=0;i<N;i++){
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,R-8,i*ARC,(i+1)*ARC); ctx.closePath();
+    ctx.fillStyle = css(SECTORS[i].c); ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = '#ffffff'; ctx.stroke();
+    ctx.save(); ctx.rotate(i*ARC+ARC/2); ctx.textAlign='right'; ctx.fillStyle='#151a2e';
+    ctx.font = '800 46px Unbounded, Arial Black, sans-serif'; ctx.fillText(SECTORS[i].pts, R-30, 16);
+    ctx.font = '700 18px Manrope, system-ui, sans-serif';
+    const lines = wrapText(SECTORS[i].task, 200);
+    lines.forEach((l,k)=>ctx.fillText(l, R-112, -14 + k*21 - (lines.length-1)*6));
+    ctx.restore();
+  }
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(R,R,46,0,2*Math.PI); ctx.fillStyle=css('--surface'); ctx.fill();
+  ctx.lineWidth=6; ctx.strokeStyle=css('--fg'); ctx.stroke();
+  ctx.fillStyle=css('--fg'); ctx.font='800 26px Unbounded, Arial Black, sans-serif'; ctx.textAlign='center'; ctx.fillText('7M', R, R+9);
+}
+function indexAtPointer(a){
+  // pointer at top (-90deg). Sector i covers [i*ARC + a, (i+1)*ARC + a]
+  let rel = (-Math.PI/2 - a) % (2*Math.PI); if(rel<0) rel += 2*Math.PI;
+  return Math.floor(rel/ARC) % N;
+}
+function show(i){
+  const s = SECTORS[i];
+  document.getElementById('resPts').textContent = s.label;
+  document.getElementById('resTask').textContent = s.task;
+  document.getElementById('result').hidden = false;
+  document.getElementById('task5').hidden = false;
+  btn.disabled = true; btn.textContent = 'Колесо вже прокручено';
+}
+function save(o){ try{ localStorage.setItem(KEY, JSON.stringify(o)) }catch(e){} }
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) }catch(e){ return null } }
+
+btn.addEventListener('click', ()=>{
+  btn.disabled = true;
+  const target = Math.floor(Math.random()*N);
+  // final angle so that the target sector's middle sits under the pointer
+  const finalBase = -Math.PI/2 - (target*ARC + ARC/2) + (Math.random()-.5)*ARC*0.6;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const start = angle, turns = reduce ? 0 : 6;
+  let end = finalBase; while(end < start + turns*2*Math.PI) end += 2*Math.PI;
+  const dur = reduce ? 1 : 4200, t0 = performance.now();
+  function frame(t){
+    const p = Math.min(1,(t-t0)/dur), e = 1 - Math.pow(1-p, 4);
+    angle = start + (end-start)*e; draw();
+    if(p<1) requestAnimationFrame(frame);
+    else { const i = indexAtPointer(angle); save({i, angle}); show(i) }
+  }
+  requestAnimationFrame(frame);
+});
+document.getElementById('helpBtn').addEventListener('click', e=>{
+  const h = document.getElementById('help'); h.hidden = !h.hidden;
+  e.currentTarget.setAttribute('aria-expanded', String(!h.hidden));
+  e.currentTarget.textContent = h.hidden ? 'Нагадати, що таке gumption' : 'Сховати пояснення';
+});
+
+const prev = load();
+if(prev && Number.isInteger(prev.i) && prev.i < N){ angle = prev.angle || 0; show(prev.i) }
+document.fonts ? document.fonts.ready.then(draw) : draw(); draw();
+</script>
+
+</body>
+</html>
