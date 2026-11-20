@@ -143,8 +143,8 @@ function draw(){
     ctx.save(); ctx.rotate(i*ARC+ARC/2); ctx.textAlign='right'; ctx.fillStyle='#151a2e';
     ctx.font = '800 46px Unbounded, Arial Black, sans-serif'; ctx.fillText(SECTORS[i].pts, R-30, 16);
     ctx.font = '700 22px Manrope, system-ui, sans-serif';
-    const lines = wrapText(SECTORS[i].short, 170);
-    lines.forEach((l,k)=>ctx.fillText(l, R-104, 8 + k*25 - (lines.length-1)*12));
+    const lines = wrapText(SECTORS[i].short, 150);
+    lines.forEach((l,k)=>ctx.fillText(l, R-122, 8 + k*25 - (lines.length-1)*12));
     ctx.restore();
   }
   ctx.restore();
