@@ -21,6 +21,7 @@
 :root[data-theme="dark"]{--bg:#0f1222; --surface:#191d33; --fg:#eef0fa; --muted:#a3aac6; --line:#2c3150; --accent:#ff6a48; --accent-ink:#0f1222; color-scheme:dark}
 
 html,body{background:var(--bg); color:var(--fg)}
+[hidden]{display:none!important}
 body{font-family:var(--body); font-size:16px; line-height:1.5;
   padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:20px 40px}
 .wrap{max-width:520px; margin:0 auto; display:flex; flex-direction:column; gap:18px}
@@ -108,16 +109,16 @@ button:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
 
 <script>
 const SECTORS = [
-  {pts:'+2', label:'+2 бали', task:'Мовчки встань, привітайся за руку з трьома людьми і так само мовчки сядь.', c:'--s1'},
-  {pts:'+1', label:'+1 бал', task:'Пощастило! Бонус просто так.', c:'--s2'},
-  {pts:'0', label:'0 балів', task:'Сьогодні не твій день. Просто посміхнись.', c:'--s3'},
-  {pts:'+½', label:'+0,5 бала', task:'Мовчки покажи викладачу великий палець.', c:'--s4'},
-  {pts:'+1', label:'+1 бал', task:'Мовчки помахай людині в іншому кінці аудиторії, поки вона не помітить.', c:'--s5'},
-  {pts:'+2', label:'+2 бали', task:'Мовчки встань, повільно обернись навколо себе і сядь.', c:'--s6'},
-  {pts:'+½', label:'+0,5 бала', task:'З дуже серйозним обличчям потисни руку сусіду.', c:'--s7'},
-  {pts:'+1', label:'+1 бал', task:'Намалюй на полях листка свого внутрішнього підприємця.', c:'--s8'},
-  {pts:'+2', label:'+2 бали', task:'Напиши на листку «Я підприємець» дзеркально, справа наліво.', c:'--s9'},
-  {pts:'0', label:'0 балів', task:'Порожньо. Але gumption не здається!', c:'--s10'},
+  {short:'Привітайся мовчки з трьома', pts:'+2', label:'+2 бали', task:'Мовчки встань, привітайся за руку з трьома людьми і так само мовчки сядь.', c:'--s1'},
+  {short:'Бонус просто так', pts:'+1', label:'+1 бал', task:'Пощастило! Бонус просто так.', c:'--s2'},
+  {short:'Просто посміхнись', pts:'0', label:'0 балів', task:'Сьогодні не твій день. Просто посміхнись.', c:'--s3'},
+  {short:'Великий палець викладачу', pts:'+½', label:'+0,5 бала', task:'Мовчки покажи викладачу великий палець.', c:'--s4'},
+  {short:'Помахай через аудиторію', pts:'+1', label:'+1 бал', task:'Мовчки помахай людині в іншому кінці аудиторії, поки вона не помітить.', c:'--s5'},
+  {short:'Оберт навколо себе', pts:'+2', label:'+2 бали', task:'Мовчки встань, повільно обернись навколо себе і сядь.', c:'--s6'},
+  {short:'Серйозно потисни руку', pts:'+½', label:'+0,5 бала', task:'З дуже серйозним обличчям потисни руку сусіду.', c:'--s7'},
+  {short:'Намалюй підприємця', pts:'+1', label:'+1 бал', task:'Намалюй на полях листка свого внутрішнього підприємця.', c:'--s8'},
+  {short:'Дзеркальний напис', pts:'+2', label:'+2 бали', task:'Напиши на листку «Я підприємець» дзеркально, справа наліво.', c:'--s9'},
+  {short:'Порожньо', pts:'0', label:'0 балів', task:'Порожньо. Але gumption не здається!', c:'--s10'},
 ];
 const KEY = 'gumption-wheel-2026-11-20-v2';
 const cv = document.getElementById('wheel'), ctx = cv.getContext('2d');
@@ -141,9 +142,9 @@ function draw(){
     ctx.lineWidth = 4; ctx.strokeStyle = '#ffffff'; ctx.stroke();
     ctx.save(); ctx.rotate(i*ARC+ARC/2); ctx.textAlign='right'; ctx.fillStyle='#151a2e';
     ctx.font = '800 46px Unbounded, Arial Black, sans-serif'; ctx.fillText(SECTORS[i].pts, R-30, 16);
-    ctx.font = '700 18px Manrope, system-ui, sans-serif';
-    const lines = wrapText(SECTORS[i].task, 200);
-    lines.forEach((l,k)=>ctx.fillText(l, R-112, -14 + k*21 - (lines.length-1)*6));
+    ctx.font = '700 22px Manrope, system-ui, sans-serif';
+    const lines = wrapText(SECTORS[i].short, 170);
+    lines.forEach((l,k)=>ctx.fillText(l, R-104, 8 + k*25 - (lines.length-1)*12));
     ctx.restore();
   }
   ctx.restore();
